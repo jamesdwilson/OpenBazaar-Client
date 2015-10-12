@@ -5,18 +5,46 @@ var __ = require('underscore'),
     itemsShortCollection = require('../collections/itemsShortCl'),
     itemShortView = require('./itemShortVw');
 
+
+var updateOptions =
+    function (context) {
+        return function (options) {
+            console.log("[itemListVw.js:12] updateOptions()");
+
+            context.options = options;
+            //the model must be passed in by the constructor
+            context.itemsShort = new itemsShortCollection(this.model);
+            //this.listenTo(this.options.userModel, 'change', function(){
+            //  self.render();
+            //});
+            context.subViews = [];
+            context.render();
+        };
+    };
+
+
+
+var updateItem =
+    function (context) {
+        return function (item) {
+            if(!item || typeof item !== 'object') {
+                throw "[itemListVw.js:31] addItem() Invalid item passed";
+            }
+            console.log("[itemListVw.js:34] addItem()", item);
+
+            __.extend(context.options, item);
+            context.updateOptions(context.options);
+        };
+    };
 module.exports = Backbone.View.extend({
 
   initialize: function(options){
-    var self = this;
-    this.options = options || {};
-    //the model must be passed in by the constructor
-    this.itemsShort = new itemsShortCollection(this.model);
-    //this.listenTo(this.options.userModel, 'change', function(){
-    //  self.render();
-    //});
-    this.subViews = [];
-    this.render();
+      this.options = options;
+
+      this.updateOptions = this.update || updateOptions(this);
+      this.updateItem = this.updateItem || updateItem(this);
+
+      this.updateOptions(options);
   },
 
   render: function(){

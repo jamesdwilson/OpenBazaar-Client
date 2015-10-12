@@ -6,110 +6,110 @@ Backbone.$ = $;
 var fs = require('fs'),//TODO: Remove FS - it is not used?
     loadTemplate = require('../utils/loadTemplate'),
     itemListView = require('./itemListVw'),
-    storeListView = require('./userListVw');
-
+    itemList,
+    storeListView = require('./userListVw'),
+    storeList,
+    ws,
+    wsUrl = 'ws://localhost:18466',
+    wsConnected,
+    useFakeStores = true,
+    useFakeListings = true;
 
 var fakeStores = [
+
   {
-    name: "A Store",
-    handle: 0,
-    avatar_hash: "",
-    nsfw: false
-  },
-  {
-    name: "A Second Store",
-    handle: 0,
-    avatar_hash: "",
-    nsfw: false
-  },
-  {
-    name: "A Third Store",
-    handle: 0,
-    avatar_hash: "",
-    nsfw: false
+    "vendor": {
+      "handle": "@artstudio",
+      "name": "An Art Studio",
+      "nsfw": true,
+      "short_description": "Art Studio",
+      "avatar_hash": "32f7a0445c83a5a2c05a2f27015f9bc366d68b7e",
+      "guid": "5e415e86ab3314168a77f714ff0a67c4f7644609"
+    },
+    "id": "34cd5975bf5b4fa0b2db4c49dbf9a0c4e96e8b00"
   }
 ];
 
 var fakeItems = [
   {
-    "contract_hash": "2fefc6d167eb0e21ae0019821a64c59771d830fc",
-    "category": "Test",
-    "nsfw": false,
-    "title": "Test Item One",
-    "thumbnail_hash": "a8a38198fbfba2cfb6c45f16a3b0cb44ef769414",
-    "price": 12,
-    "origin": "UNITED_STATES",
-    "currency_code": "usd",
-    "ships_to": [
-      "UNITED_STATES"
-    ],
-    "userCurrencyCode": "USD",
-    "server": "http://seed.openbazaar.org:18469/api/v1/",
-    "showAvatar": true,
-    "avatar_hash": "",
-    "handle": "test user 1",
-    "guid": "1"
-  },
-  {
-    "contract_hash": "66a3de906bed05a635d6876997f0f74f6d37c4f7",
-    "category": "Test",
-    "nsfw": false,
-    "title": "Test Item Two with a Longer Title To See How That Fits in the UI",
-    "thumbnail_hash": "",
-    "price": 379.0,
-    "origin": "UNITED_STATES",
-    "currency_code": "usd",
-    "ships_to": [
-      "UNITED_STATES"
-    ],
-    "userCurrencyCode": "USD",
-    "server": "http://seed.openbazaar.org:18469/api/v1/",
-    "showAvatar": true,
-    "avatar_hash": "",
-    "handle": "test user 1",
-    "guid": "1"
-  },
-  {
-    "contract_hash": "a62c340b4d5ab8124123cc8de24a5ebd9ec338be",
-    "category": "Test",
-    "nsfw": false,
-    "title": "Test Item Four",
-    "thumbnail_hash": "79f5c703e48cd3a4cc6b0ea861612f1fa17bd26d",
-    "price": 2.0,
-    "origin": "UNITED_STATES",
-    "currency_code": "usd",
-    "ships_to": [
-      "UNITED_STATES"
-    ],
-    "userCurrencyCode": "USD",
-    "server": "http://seed.openbazaar.org:18469/api/v1/",
-    "showAvatar": true,
-    "avatar_hash": "",
-    "handle": "test user 1",
-    "guid": "1"
-  },
-  {
-    "contract_hash": "601875c82657469636940ffcc52c148d63621403",
-    "category": "Test",
-    "nsfw": false,
-    "title": "Test Item Four",
-    "thumbnail_hash": "e9e37e8efc72c57d59741a235e944e56781849a3",
-    "price": 323479.0,
-    "origin": "UNITED_STATES",
-    "currency_code": "usd",
-    "ships_to": [
-      "UNITED_STATES"
-    ],
-    "userCurrencyCode": "USD",
-    "server": "http://seed.openbazaar.org:18469/api/v1/",
-    "showAvatar": true,
-    "avatar_hash": "",
-    "handle": "test user 1",
-    "guid": "1"
+    "id": "24cd5975bf5b4fa1b2db4c49dbf9a0c4e96e8b11",
+    "listing": {
+      "contract_hash": "2fefc6d167eb0e21ae0019821a64c59771d830fc",
+      "category": "Test",
+      "nsfw": false,
+      "title": "Test Item One",
+      "thumbnail_hash": "a8a38198fbfba2cfb6c45f16a3b0cb44ef769414",
+      "price": 12,
+      "origin": "UNITED_STATES",
+      "currency_code": "usd",
+      "ships_to": [
+        "UNITED_STATES"
+      ],
+      "userCurrencyCode": "USD",
+      "server": "http://localhost:18469/api/v1/",
+      "showAvatar": true,
+      "avatar_hash": "",
+      "handle": "test user 1",
+      "guid": "1234"
+    }
   }
 ];
 
+function wsConnect() {
+  if (!wsConnected) {
+    console.log("[homeVw.js:117] connecting..");
+    ws = new WebSocket(wsUrl);
+    ws.onopen = wsOnOpen;
+    ws.onclose = wsOnClose;
+    ws.onmessage = wsOnMessage;
+  }
+}
 
+
+function wsOnOpen() {
+  var getVendorsRequest = {
+    "request": {
+      "api": "v1",
+      "id": Math.random().toString(36),
+      "command": "get_vendors"
+    }
+  };
+  var getHomepageListingsRequest = {
+    "request": {
+      "api": "v1",
+      "id": Math.random().toString(36),
+      "command": "get_homepage_listings"
+    }
+  };
+
+  console.log("[homeVw.js:125] OPENED CONNECTION");
+  wsConnected = true;
+  if (useFakeStores) {
+    storeList.updateItem(fakeStores[0]);
+  } else {
+    ws.send(JSON.stringify(getVendorsRequest));
+  }
+  if (useFakeListings) {
+    itemList.updateItem(fakeItems[0]);
+  } else {
+    ws.send(JSON.stringify(getHomepageListingsRequest));
+  }
+}
+
+function wsOnMessage(evt)
+{
+  console.log("[homeVw.js:131] incoming store");
+  var dataObj = JSON.parse(evt.data);
+  if(dataObj.vendor) { //store
+    storeList.addItem(dataObj);
+  }
+}
+
+function wsOnClose()
+{
+  wsConnected = false;
+  console.log("[homeVw.js:133] Websockets closed!");
+}
 module.exports = Backbone.View.extend({
 
   className:"homeView",
@@ -121,9 +121,12 @@ module.exports = Backbone.View.extend({
 
   initialize: function(options){
     var self = this;
+    var postRender = function() {
+      wsConnect();
+    };
     this.options = options || {};
     this.subViews = [];
-    this.render();
+    this.render(postRender);
   },
 
   hideList1: function(e){
@@ -140,21 +143,22 @@ module.exports = Backbone.View.extend({
     $('.js-homeStoresBtn').addClass('active');
   },
 
-  render: function(){
+  render: function(callback){
     var self = this;
     $('#content').html(this.$el);
     loadTemplate('./js/templates/home.html', function(loadedTemplate) {
       self.$el.html(loadedTemplate());
       self.subRender();
+      callback();
     });
   },
 
   subRender: function(){
-    var itemList = new itemListView({model: fakeItems, el: '.js-list1', userModel: this.options.userModel, showAvatar: true});
-    var storeList = new storeListView({model: fakeStores, el: '.js-list2'});
-    this.subViews.push(itemList,storeList);
-    this.hideList1();
+    itemList = new itemListView({model: [], el: '.js-list1', userModel: this.options.userModel, showAvatar: true});
+    storeList = new storeListView({model: [], el: '.js-list2'});
 
+    this.subViews.push(itemList, storeList);
+    this.hideList1();
     //render current date
     $('.js-currentDate').html(Moment().format('MMMM Do, YYYY'));
   },
@@ -177,5 +181,4 @@ module.exports = Backbone.View.extend({
     });
     this.remove();
   }
-
 });

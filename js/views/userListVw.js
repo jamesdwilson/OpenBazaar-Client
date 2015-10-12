@@ -6,19 +6,44 @@ var __ = require('underscore'),
     userShortView = require('./userShortVw'),
     simpleMessageView = require('./simpleMessageVw');
 
+var updateOptions = function (context) {
+  return function (options) {
+    console.log("[userListVw.js:11] updateOptions()");
+
+    context.options = options;
+    /*expected options:
+     options.title: title for no users found
+     options.message: message for no users found
+     */
+    //the model must be passed in by the constructor
+    context.usersShort = new usersShortCollection(this.
+        model);
+    context.subViews = [];
+    context.render();
+  };
+};
+
+var updateItem =
+    function (context) {
+      return function (item) {
+        if(!item || typeof item !== 'object') {
+          throw "[userListVw.js:30] addItem() Invalid item passed";
+        }
+        console.log("[userListVw.js:27] addItem()", item);
+        __.extend(context.options, item);
+        context.updateOptions(context.options);
+      };
+    };
+
 module.exports = Backbone.View.extend({
 
   initialize: function(options){
-    var self = this;
-    this.options = options || {};
-    /*expected options:
-      options.title: title for no users found
-      options.message: message for no users found
-    */
-    //the model must be passed in by the constructor
-    this.usersShort = new usersShortCollection(this.model);
-    this.subViews = [];
-    this.render();
+    this.options = options;
+    this.updateItem = updateItem(this);
+    this.updateOptions = updateOptions(this);
+
+    this.updateOptions(options);
+    console.log("[userListVw.js:40] initialized");
   },
 
   render: function(){
@@ -58,6 +83,5 @@ module.exports = Backbone.View.extend({
     });
     this.remove();
   }
-
 });
 
